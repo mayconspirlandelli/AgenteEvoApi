@@ -6,8 +6,8 @@ from send_sandeco import SendSandeco  # Certifique-se de que a classe Send está
 mensageiro = SendSandeco()
 
 # Criar a pasta 'temp' para salvar arquivos
-if not os.path.exists('temp'):
-    os.makedirs('temp')
+if not os.path.exists('src/temp'):
+    os.makedirs('src/temp')
 
 # Configuração do Streamlit
 st.title("Envio de Mensagens - EvolutionAPI")
@@ -38,7 +38,7 @@ elif tipo == "Imagem":
 
     if st.button("Enviar Imagem"):
         if numero and imagem:
-            caminho_imagem = f"temp/{imagem.name}"
+            caminho_imagem = f"src/temp/{imagem.name}"
             with open(caminho_imagem, "wb") as f:
                 f.write(imagem.read())
 
@@ -54,7 +54,7 @@ elif tipo == "Vídeo":
 
     if st.button("Enviar Vídeo"):
         if numero and video:
-            caminho_video = f"temp/{video.name}"
+            caminho_video = f"src/temp/{video.name}"
             with open(caminho_video, "wb") as f:
                 f.write(video.read())
 
@@ -69,7 +69,7 @@ elif tipo == "Áudio":
 
     if st.button("Enviar Áudio"):
         if numero and audio:
-            caminho_audio = f"temp/{audio.name}"
+            caminho_audio = f"src/temp/{audio.name}"
             with open(caminho_audio, "wb") as f:
                 f.write(audio.read())
 
@@ -85,7 +85,7 @@ elif tipo == "PDF":
 
     if st.button("Enviar PDF"):
         if numero and pdf:
-            caminho_pdf = f"temp/{pdf.name}"
+            caminho_pdf = f"src/temp/{pdf.name}"
             with open(caminho_pdf, "wb") as f:
                 f.write(pdf.read())
 
@@ -101,7 +101,7 @@ elif tipo == "Documento":
 
     if st.button("Enviar Documento"):
         if numero and documento:
-            caminho_documento = f"temp/{documento.name}"
+            caminho_documento = f"src/temp/{documento.name}"
             with open(caminho_documento, "wb") as f:
                 f.write(documento.read())
 
@@ -112,6 +112,6 @@ elif tipo == "Documento":
 
 # Limpeza da pasta 'temp' após envio
 if st.button("Limpar arquivos temporários"):
-    for arquivo in os.listdir('temp'):
-        os.remove(os.path.join('temp', arquivo))
+    for arquivo in os.listdir('src/temp'):
+        os.remove(os.path.join('src/temp', arquivo))
     st.success("Arquivos temporários limpos.")

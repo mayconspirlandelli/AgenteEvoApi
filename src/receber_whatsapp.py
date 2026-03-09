@@ -9,8 +9,7 @@ def webhook():
 
     try:
         data = request.get_json()        
-        msg = MessageSandeco(data)         
-                            
+        msg = MessageSandeco(data)               
 
         send = SendSandeco()
         send.textMessage(number=msg.phone,

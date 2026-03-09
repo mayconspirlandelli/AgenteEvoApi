@@ -1,7 +1,8 @@
 import base64
 
 class MessageSandeco:
-    
+    #Classe rsponsavel por extrair os dados de uma mensagem recebida da API do Evo e organizar esses dados em atributos da classe. Ela também tem métodos para retornar os dados organizados e para obter o texto da mensagem, dependendo do tipo de mensagem recebida (texto, imagem, áudio ou documento).
+
     TYPE_TEXT = "conversation"
     TYPE_AUDIO = "audioMessage"
     TYPE_IMAGE = "imageMessage"
