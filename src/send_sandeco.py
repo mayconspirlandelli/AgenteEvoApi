@@ -40,6 +40,18 @@ class SendSandeco:
         self.evo_instance_token = os.getenv("EVO_INSTANCE_TOKEN")
         self.evo_base_url = os.getenv("EVO_BASE_URL")
         
+        # Validar variáveis obrigatórias
+        missing_vars = []
+        if not self.evo_api_token: missing_vars.append("EVO_API_TOKEN")
+        if not self.evo_instance_id: missing_vars.append("EVO_INSTANCE_NAME")
+        if not self.evo_instance_token: missing_vars.append("EVO_INSTANCE_TOKEN")
+        if not self.evo_base_url: missing_vars.append("EVO_BASE_URL")
+        
+        if missing_vars:
+            raise ValueError(f"As seguintes variáveis de ambiente estão faltando no .env: {', '.join(missing_vars)}")
+
+
+        
         # Inicializar o cliente Evolution
         self.client = EvolutionClient(
             base_url=self.evo_base_url,
