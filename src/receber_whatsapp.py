@@ -19,10 +19,11 @@ def health_check():
     }), 200
 
 @app.route("/webhook", methods=['POST'])
+@app.route("/messages-upsert", methods=['POST'])
 def webhook():
     """
     Endpoint principal para receber notificações da EvolutionAPI.
-    Configure este URL na sua instância da Evolution API.
+    Suporta tanto /webhook quanto /messages-upsert.
     """
     try:
         data = request.get_json()
