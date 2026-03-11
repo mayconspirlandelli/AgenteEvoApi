@@ -1,8 +1,16 @@
 from flask import Flask, request, jsonify
-from message_sandeco import MessageSandeco
-from send_sandeco import SendSandeco
 import json
 import time
+import sys
+import os
+
+# Adiciona o diretório 'src' ao sys.path para permitir importações absolutas de core e agents
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.append(os.path.join(base_dir, 'src'))
+
+from core.message_sandeco import MessageSandeco
+from core.send_sandeco import SendSandeco
+from agents.agente_verificador import AgenteVerificador
 
 
 app = Flask(__name__)
@@ -44,15 +52,24 @@ def webhook():
         print(f"{'-'*40}")
         # print("DEBUG - JSON Bruto:", json.dumps(data, indent=2))
 
-
-        # Opcional: Responder automaticamente (exemplo: ecoar a mensagem)
-        # Atenção: Cuidado com loops infinitos se o bot responder a si mesmo!
+        # Responde automaticamente verificando notícia
         if not msg.from_me:
-            # print("Enviando resposta automática (eco)...")
-            # sender = SendSandeco()
-            # sender.textMessage(number=msg.phone, msg=f"Você disse: {msg.get_text()}")
-            pass
-
+            msg_text = msg.get_text()
+            if msg_text:
+                print(f"🤖 Verificando notícia: {msg_text}")
+                
+                # Inicializa o agente e verifica a notícia
+                agent = AgenteVerificador()
+                verdict = agent.verificar(msg_text)
+                
+                print(f"⚖️ Veredito: {verdict}")
+                
+                # Envia a resposta de volta pelo WhatsApp
+                sender = SendSandeco()
+                sender.textMessage(number=msg.phone, msg=verdict)
+            else:
+                print("⚠️ Mensagem sem conteúdo de texto ignorada.")
+        
         return jsonify({"status": "success", "message": "Mensagem processada"}), 200
 
     except Exception as e:
