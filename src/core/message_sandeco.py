@@ -6,6 +6,7 @@ class MessageSandeco:
     TYPE_TEXT = "conversation"
     TYPE_AUDIO = "audioMessage"
     TYPE_IMAGE = "imageMessage"
+    TYPE_VIDEO = "videoMessage"
     TYPE_DOCUMENT = "documentMessage"
     
     SCOPE_GROUP = "group"
@@ -67,10 +68,10 @@ class MessageSandeco:
             self.extract_audio_message()
         elif self.message_type == self.TYPE_IMAGE:
             self.extract_image_message()
+        elif self.message_type == self.TYPE_VIDEO:
+            self.extract_video_message()
         elif self.message_type == self.TYPE_DOCUMENT:
             self.extract_document_message()
-
-
 
     def extract_text_message(self):
         """Extrai dados de uma mensagem de texto e define como atributos."""
@@ -78,8 +79,10 @@ class MessageSandeco:
 
     def extract_audio_message(self):
         """Extrai dados de uma mensagem de áudio e define como atributos da classe."""
-        audio_data = self.data["data"]["message"]["audioMessage"]
-        self.audio_base64_bytes = self.data["data"]["message"].get("base64")
+        msg_dict = self.data["data"]["message"]
+        audio_data = msg_dict.get("audioMessage", {})
+        self.audio_base64 = self.get_base64_str(msg_dict, "audioMessage")
+        self.audio_base64_bytes = self.decode_base64(msg_dict, "audioMessage")
         self.audio_url = audio_data.get("url")
         self.audio_mimetype = audio_data.get("mimetype")
         self.audio_file_sha256 = audio_data.get("fileSha256")
@@ -92,10 +95,10 @@ class MessageSandeco:
         self.audio_waveform = audio_data.get("waveform")
         self.audio_view_once = audio_data.get("viewOnce", False)
         
-        
     def extract_image_message(self):
         """Extrai dados de uma mensagem de imagem e define como atributos."""
-        image_data = self.data["data"]["message"]["imageMessage"]
+        msg_dict = self.data["data"]["message"]
+        image_data = msg_dict.get("imageMessage", {})
         self.image_url = image_data.get("url")
         self.image_mimetype = image_data.get("mimetype")
         self.image_caption = image_data.get("caption")
@@ -111,11 +114,26 @@ class MessageSandeco:
         self.image_scans_sidecar = image_data.get("scansSidecar")
         self.image_scan_lengths = image_data.get("scanLengths")
         self.image_mid_quality_file_sha256 = image_data.get("midQualityFileSha256")
-        self.image_base64 = self.data["data"]["message"].get("base64")
+        self.image_base64 = self.get_base64_str(msg_dict, "imageMessage")
+        self.image_base64_bytes = self.decode_base64(msg_dict, "imageMessage")
         
+    def extract_video_message(self):
+        """Extrai dados de uma mensagem de vídeo e define como atributos."""
+        msg_dict = self.data["data"]["message"]
+        video_data = msg_dict.get("videoMessage", {})
+        self.video_url = video_data.get("url")
+        self.video_mimetype = video_data.get("mimetype")
+        self.video_caption = video_data.get("caption")
+        self.video_file_sha256 = video_data.get("fileSha256")
+        self.video_file_length = video_data.get("fileLength")
+        self.video_media_key = video_data.get("mediaKey")
+        self.video_base64 = self.get_base64_str(msg_dict, "videoMessage")
+        self.video_base64_bytes = self.decode_base64(msg_dict, "videoMessage")
+
     def extract_document_message(self):
         """Extrai dados de uma mensagem de documento e define como atributos da classe."""
-        document_data = self.data["data"]["message"]["documentMessage"]
+        msg_dict = self.data["data"]["message"]
+        document_data = msg_dict.get("documentMessage", {})
         self.document_url = document_data.get("url")
         self.document_mimetype = document_data.get("mimetype")
         self.document_title = document_data.get("title")
@@ -126,13 +144,34 @@ class MessageSandeco:
         self.document_file_enc_sha256 = document_data.get("fileEncSha256")
         self.document_direct_path = document_data.get("directPath")
         self.document_caption = document_data.get("caption", None)
-        self.document_base64_bytes = self.decode_base64(self.data["data"]["message"].get("base64"))
+        self.document_base64 = self.get_base64_str(msg_dict, "documentMessage")
+        self.document_base64_bytes = self.decode_base64(msg_dict, "documentMessage")
 
-    def decode_base64(self, base64_string):
-        """Converte uma string base64 em bytes."""
+    def decode_base64(self, message_obj, type_key=None):
+        """Tenta encontrar e converter uma string base64 em bytes."""
+        base64_string = message_obj.get("base64")
+        if not base64_string and type_key:
+            specific_obj = message_obj.get(type_key)
+            if isinstance(specific_obj, dict):
+                base64_string = specific_obj.get("base64")
+        
         if base64_string:
+            if "," in base64_string:
+                base64_string = base64_string.split(",")[-1]
             return base64.b64decode(base64_string)
         return None
+
+    def get_base64_str(self, message_obj, type_key=None):
+        """Retorna a string base64 pura."""
+        base64_string = message_obj.get("base64")
+        if not base64_string and type_key:
+            specific_obj = message_obj.get(type_key)
+            if isinstance(specific_obj, dict):
+                base64_string = specific_obj.get("base64")
+        
+        if base64_string and "," in base64_string:
+            base64_string = base64_string.split(",")[-1]
+        return base64_string
 
     def get(self):
         """Retorna todos os atributos como um dicionário."""
@@ -145,5 +184,7 @@ class MessageSandeco:
             text = self.text_message
         elif self.message_type == self.TYPE_IMAGE:
             text = self.image_caption
+        elif self.message_type == self.TYPE_VIDEO:
+            text = self.video_caption
             
-        return text
+        return text if text else ""

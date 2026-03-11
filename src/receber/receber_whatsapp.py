@@ -52,15 +52,58 @@ def webhook():
         print(f"{'-'*40}")
         # print("DEBUG - JSON Bruto:", json.dumps(data, indent=2))
 
-        # Responde automaticamente verificando notícia
+        # Salva mídia se houver
+        # dirname(__file__) é src/receber, .. é src
+        temp_dir = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), 'temp')
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
+
+        if msg.message_type in [msg.TYPE_IMAGE, msg.TYPE_AUDIO, msg.TYPE_VIDEO]:
+            media_bytes = None
+            ext = ""
+            if msg.message_type == msg.TYPE_IMAGE:
+                media_bytes = msg.image_base64_bytes
+                ext = msg.image_mimetype.split('/')[-1] if msg.image_mimetype else 'jpg'
+            elif msg.message_type == msg.TYPE_AUDIO:
+                media_bytes = msg.audio_base64_bytes
+                ext = msg.audio_mimetype.split('/')[-1].split(';')[0] if msg.audio_mimetype else 'ogg'
+            elif msg.message_type == msg.TYPE_VIDEO:
+                media_bytes = msg.video_base64_bytes
+                ext = msg.video_mimetype.split('/')[-1] if msg.video_mimetype else 'mp4'
+
+            if media_bytes:
+                filename = f"{msg.message_type}_{int(time.time())}.{ext}"
+                filepath = os.path.join(temp_dir, filename)
+                with open(filepath, 'wb') as f:
+                    f.write(media_bytes)
+                print(f"📁 Mídia salva em: {filepath}")
+            else:
+                if msg.message_type in [msg.TYPE_IMAGE, msg.TYPE_AUDIO, msg.TYPE_VIDEO]:
+                    print(f"⚠️ Mídia detectada ({msg.message_type}), mas base64 (media_bytes) está vazio.")
+
+        # Responde automaticamente verificando notícia (Texto, Imagem, Áudio, Vídeo)
         if not msg.from_me:
             msg_text = msg.get_text()
-            if msg_text:
-                print(f"🤖 Verificando notícia: {msg_text}")
+            media_base64 = None
+            mimetype = None
+            
+            # Detecta mídias e extrai base64/mimetype
+            if msg.message_type == msg.TYPE_IMAGE:
+                media_base64 = msg.image_base64
+                mimetype = msg.image_mimetype
+            elif msg.message_type == msg.TYPE_AUDIO:
+                media_base64 = msg.audio_base64
+                mimetype = msg.audio_mimetype
+            elif msg.message_type == msg.TYPE_VIDEO:
+                media_base64 = msg.video_base64
+                mimetype = msg.video_mimetype
+            
+            if msg_text or msg.message_type in [msg.TYPE_IMAGE, msg.TYPE_AUDIO, msg.TYPE_VIDEO]:
+                print(f"🤖 Verificando conteúdo (Tipo: {msg.message_type})")
                 
-                # Inicializa o agente e verifica a notícia
+                # Inicializa o agente e verifica a notícia passando o objeto da mensagem
                 agent = AgenteVerificador()
-                verdict = agent.verificar(msg_text)
+                verdict = agent.verificar(msg)
                 
                 print(f"⚖️ Veredito: {verdict}")
                 
@@ -68,7 +111,7 @@ def webhook():
                 sender = SendSandeco()
                 sender.textMessage(number=msg.phone, msg=verdict)
             else:
-                print("⚠️ Mensagem sem conteúdo de texto ignorada.")
+                print("⚠️ Mensagem sem conteúdo legível ignorada.")
         
         return jsonify({"status": "success", "message": "Mensagem processada"}), 200
 
